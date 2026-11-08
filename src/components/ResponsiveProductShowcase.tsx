@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IconGlobe, IconLayers, IconCheckCircle, IconSliders } from './Icons';
+import { asset } from '../utils/asset';
 
 interface ShowcasePage {
   id: string;
@@ -18,8 +19,8 @@ const PAGES: ShowcasePage[] = [
     id: 'beranda',
     name: 'Beranda Utama',
     route: 'https://balmon-pekanbaru-demo.vercel.app/',
-    desktopSrc: '/assets/balmon/screenshots/home-desktop.png',
-    mobileSrc: '/assets/balmon/screenshots/home-mobile.png',
+    desktopSrc: asset('/assets/balmon/screenshots/home-desktop.png'),
+    mobileSrc: asset('/assets/balmon/screenshots/home-mobile.png'),
     headline: 'Pusat Informasi & Ringkasan Layanan Publik',
     description: 'Menampilkan hero interaktif, ringkasan perizinan frekuensi, statistik balai, serta rilis pers penertiban spektrum radio di Riau.',
     techSpecs: ['SvelteKit 2 Prerendered', 'Tailwind CSS v4', 'WCAG 2.2 AA', '0ms Hydration Shift'],
@@ -28,8 +29,8 @@ const PAGES: ShowcasePage[] = [
     id: 'layanan',
     name: 'Katalog Layanan',
     route: 'https://balmon-pekanbaru-demo.vercel.app/layanan',
-    desktopSrc: '/assets/balmon/screenshots/layanan-desktop.png',
-    mobileSrc: '/assets/balmon/screenshots/layanan-mobile.png',
+    desktopSrc: asset('/assets/balmon/screenshots/layanan-desktop.png'),
+    mobileSrc: asset('/assets/balmon/screenshots/layanan-mobile.png'),
     headline: 'Panduan Perizinan & Layanan Spektrum Radio',
     description: 'Katalog perizinan ISR, integrasi sistem SIMS SDPPI, informasi alur pengajuan sertifikasi perangkat, dan FAQ teknis.',
     techSpecs: ['ServicesReader JSON', 'Ajv Schema Validated', 'Aksesibilitas Kontras Tinggi'],
@@ -38,8 +39,8 @@ const PAGES: ShowcasePage[] = [
     id: 'ppid',
     name: 'Portal PPID',
     route: 'https://balmon-pekanbaru-demo.vercel.app/informasi-publik/ppid',
-    desktopSrc: '/assets/balmon/screenshots/ppid-desktop.png',
-    mobileSrc: '/assets/balmon/screenshots/ppid-mobile.png',
+    desktopSrc: asset('/assets/balmon/screenshots/ppid-desktop.png'),
+    mobileSrc: asset('/assets/balmon/screenshots/ppid-mobile.png'),
     headline: 'Keterbukaan Informasi Publik (UU No. 14/2008)',
     description: 'Menyajikan struktur PPID, kategori informasi berkala, serta dan merta, formulir permohonan informasi, dan laporan tahunan.',
     techSpecs: ['PublicInfoReader JSON', 'Filter Kategori Reaktif', 'Dokumen Publik Terverifikasi'],
@@ -48,8 +49,8 @@ const PAGES: ShowcasePage[] = [
     id: 'publikasi',
     name: 'Berita & Siaran Pers',
     route: 'https://balmon-pekanbaru-demo.vercel.app/publikasi',
-    desktopSrc: '/assets/balmon/screenshots/publikasi-desktop.png',
-    mobileSrc: '/assets/balmon/screenshots/publikasi-mobile.png',
+    desktopSrc: asset('/assets/balmon/screenshots/publikasi-desktop.png'),
+    mobileSrc: asset('/assets/balmon/screenshots/publikasi-mobile.png'),
     headline: 'Publikasi Kegiatan Monitoring & Sosialisasi',
     description: 'Arsip berita operasi penertiban frekuensi ilegal, sosialisasi perangkat radio maritim/penerbangan, dan artikel edukasi.',
     techSpecs: ['PublicationsReader JSON', 'Optimasi WebP Gambar', 'Navigasi Ramah Mobile'],
@@ -58,8 +59,8 @@ const PAGES: ShowcasePage[] = [
     id: 'profil',
     name: 'Profil Balai',
     route: 'https://balmon-pekanbaru-demo.vercel.app/profil',
-    desktopSrc: '/assets/balmon/screenshots/profil-desktop.png',
-    mobileSrc: '/assets/balmon/screenshots/profil-mobile.png',
+    desktopSrc: asset('/assets/balmon/screenshots/profil-desktop.png'),
+    mobileSrc: asset('/assets/balmon/screenshots/profil-mobile.png'),
     headline: 'Tugas Pokok, Fungsi & Wilayah Kerja',
     description: 'Struktur organisasi Balmon Kelas I Pekanbaru, visi misi Ditjen SDPPI Komdigi, dan peta wilayah kerja 12 kabupaten/kota.',
     techSpecs: ['ProfileReader JSON', 'Diagram Organisasi SVG', 'Metadata OpenGraph Lengkap'],

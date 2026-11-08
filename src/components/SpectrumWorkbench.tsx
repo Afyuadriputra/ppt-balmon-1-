@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IconRadio, IconActivity, IconFileSpreadsheet, IconCheckCircle, IconSliders } from './Icons';
+import { asset } from '../utils/asset';
 
 interface Station {
   id: number;
@@ -123,7 +124,7 @@ export default function SpectrumWorkbench() {
             }}
           >
             <img
-              src="/assets/balmon/radio/icom-7300.jpg"
+              src={asset('/assets/balmon/radio/icom-7300.jpg')}
               alt="Icom IC-7300 Transceiver"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />

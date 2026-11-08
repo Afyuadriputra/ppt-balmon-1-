@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import BrowserFrame from './BrowserFrame';
+import { asset } from '../utils/asset';
 
 interface GalleryItem {
   id: string;
@@ -15,8 +16,8 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: 'home',
     label: 'Beranda Utama',
-    desktopSrc: '/assets/balmon/screenshots/home-desktop.png',
-    mobileSrc: '/assets/balmon/screenshots/home-mobile.png',
+    desktopSrc: asset('/assets/balmon/screenshots/home-desktop.png'),
+    mobileSrc: asset('/assets/balmon/screenshots/home-mobile.png'),
     url: 'balmon-pekanbaru-demo.vercel.app/',
     description: 'Hero interaktif, sorotan layanan spektrum, peta pengawasan 12 kab/kota Riau, dan siaran pers terkini.',
     tags: ['SvelteKit 2', 'Runes Reaktif', 'WCAG AA', 'Peta D3 Geo'],
@@ -24,8 +25,8 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: 'layanan',
     label: 'Katalog Layanan',
-    desktopSrc: '/assets/balmon/screenshots/layanan-desktop.png',
-    mobileSrc: '/assets/balmon/screenshots/layanan-mobile.png',
+    desktopSrc: asset('/assets/balmon/screenshots/layanan-desktop.png'),
+    mobileSrc: asset('/assets/balmon/screenshots/layanan-mobile.png'),
     url: 'balmon-pekanbaru-demo.vercel.app/layanan',
     description: 'Perizinan spektrum radio, alur aplikasi SIMS SDPPI, kalkulator BHP frekuensi, dan FAQ interaktif.',
     tags: ['ServicesReader', 'BHP Frekuensi', 'Modal Bits UI'],
@@ -33,8 +34,8 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: 'ppid',
     label: 'Portal PPID',
-    desktopSrc: '/assets/balmon/screenshots/ppid-desktop.png',
-    mobileSrc: '/assets/balmon/screenshots/ppid-mobile.png',
+    desktopSrc: asset('/assets/balmon/screenshots/ppid-desktop.png'),
+    mobileSrc: asset('/assets/balmon/screenshots/ppid-mobile.png'),
     url: 'balmon-pekanbaru-demo.vercel.app/informasi-publik/ppid',
     description: 'Layanan keterbukaan informasi publik UU No. 14/2008, regulasi, formulir unduhan, dan kontak meja PPID.',
     tags: ['PublicInfoReader', 'KIP UU 14/2008', 'Filter Dokumen'],
@@ -42,8 +43,8 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: 'publikasi',
     label: 'Pusat Publikasi',
-    desktopSrc: '/assets/balmon/screenshots/publikasi-desktop.png',
-    mobileSrc: '/assets/balmon/screenshots/publikasi-mobile.png',
+    desktopSrc: asset('/assets/balmon/screenshots/publikasi-desktop.png'),
+    mobileSrc: asset('/assets/balmon/screenshots/publikasi-mobile.png'),
     url: 'balmon-pekanbaru-demo.vercel.app/publikasi',
     description: 'Agregasi siaran pers penertiban frekuensi, berita kegiatan monitoring balai, dan konten edukasi spektrum.',
     tags: ['PublicationsReader', 'WebP Optimized', 'Prerendered'],
