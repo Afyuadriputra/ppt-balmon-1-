@@ -1,0 +1,50 @@
+CURRENT M1 CORS BATCH — 5 November 2026
+Optional PUBLIC_CORS_ORIGIN is validated, exact-match, public namespace only; preflight 204, no credentials. Default has no cross-origin allowance. Timeout code REQUEST_TIMEOUT and pool acquisition 1s. Windows fmt/check/clippy PASS, 14 normal tests PASS; PostgreSQL test explicitly using .env.test PASS; CodeGraph sync PASS. No migrations or data mutations. M1 and M0 remain incomplete; continue JSON rejection, actual log capture, config and binary lifecycle, then M2–M6 per DAG. See IMPLEMENTATION_STATUS.md.
+
+CURRENT POSTGRES TEST HANDOFF — 5 November 2026
+User authorized explicit backend/.env.test usage for DB integration tests. Windows Cargo test postgres -- --ignored PASS: SeaORM connected, current_database=balmon_backend_test, current_user=balmon_user, live TCP readiness, server graceful shutdown and pool close. No schema/data changes. .env.test git ignored. Normal test run 12 PASS + 1 ignored; explicit PostgreSQL test 1 PASS; fmt/check/clippy PASS. CodeGraph sync PASS.
+Load .env.test into child-process environment without printing secrets; when invoking Windows Cargo from WSL pass variables using WSLENV. Verify current_database before any migration, rollback, or seed; inspect existing state and backup if needed. M1 still incomplete (CORS/preflight, request rejection, comprehensive config/log redaction, binary lifecycle); M2-M6 not implemented. Continue M0/M1, then M2 onward according to acceptance and dependencies.
+
+TASK5 CURRENT HANDOFF — 5 November 2026
+Owner delegated development approval remains active. Current status and evidence: IMPLEMENTATION_STATUS.md task5 section. Windows PostgreSQL 17 service running, psql exists, TCP 5432 reachable; noninteractive -w access as postgres or balmon_user to postgres database failed due to missing password. No secrets read, no development database accessed, no test database created. DB healthy/startup/ready/close tests and migrations blocked until safe authentication and isolated test database available. Do not guess password or access secrets.
+Windows Cargo fmt/check/clippy/test PASS; 12 tests (1 unit, 1 health contract, 7 integration, 3 security). Matched route template replaces raw path in logs. CORS/preflight, body rejection, actual log capture, PostgreSQL lifecycle and public domain contracts remain undone. M1 NOT DONE; M2-M6 not implemented. CodeGraph sync blocked by active Windows node PID 19992 holding lock; do not remove active lock. Continue independent M0/M1 work, then test DB and M2 as permitted.
+
+TASK4 — CURRENT HANDOFF (5 November 2026)
+Owner delegated approval in task/task4.md supersedes previous routine approval blockers for local development. Official unknown facts and production actions remain outside that approval.
+M1 foundation implemented in backend/src: config, state, DB connection, HTTP router, health, envelope, request IDs, security headers and error handling. Admin/auth routes absent. 1 unit and 5 integration tests passed on Windows Cargo offline; fmt and clippy passed. No functional API domain, migration, seed, cache or CMS implemented.
+PostgreSQL disposable integration BLOCKED: no postgres, psql, docker or podman in Linux PATH; no existing DB was accessed. Test contracts/security files have zero tests. M1 and later milestones are NOT DONE. Complete config/security middleware tests, actual disposable DB connectivity and M0 review, then continue M2 onward. Existing user changes must be preserved.
+
+HISTORICAL TASK3 HANDOFF BELOW (approval/status statements superseded):
+
+BALMON PEKANBARU — LLM HANDOFF TASK3
+Tanggal: 5 November 2026
+
+TUJUAN DAN BATAS
+Pengguna mengotorisasi pengembangan backend bertahap sesuai `task/task3.md` dan execution plan; jangan berhenti setelah task yang siap jika pekerjaan independen aman masih ada. Tidak boleh mengubah data resmi berdasarkan asumsi, destructive database, production migrations/deploy, credential atau Git cleanup/commit/push. Frontend hanya boleh diubah untuk integrasi yang diperlukan tanpa redesign. `.env` tidak dibaca/dicetak.
+
+KONDISI TERAKHIR
+M0-01 DONE (22 schema canonical Ajv, 24 paths, 25 readers, provider/timeout); M0-04 REVIEW (OpenAPI Redocly valid, masih perlu owner review); M0-05 BLOCKED meski DBML parser PASS karena rancangan belum disetujui; M0-02/03/06/07 BLOCKED. M1-01 dan M1-05 BLOCKED: scaffold ada dan static validation + fmt/metadata PASS, tetapi isolated Cargo check offline gagal karena cache Linux tidak memuat `errno v0.3.14`. Tidak ada source Rust diubah. M2–M6 PLANNED. M0 secara keseluruhan BLOCKED/APPROVAL_PENDING, bukan production-ready.
+
+PERUBAHAN BATCH INI
+`doc/backend/openapi.v1.yaml`: tepat tiga baris contoh: hapus metadata `$schema` dari contoh contacts dan kutip kode fungsi `08`, `09`. Nilai sama dengan canonical. Redocly error examples awal berubah menjadi valid; tiga warnings yang tersisa adalah lisensi belum dicantumkan, localhost untuk dev, dan unused PerformanceMetricsDTO component. Jangan mengarang lisensi/production URL.
+`doc/backend/BACKEND_EXECUTION_PLAN.md`: M0-01 menjadi DONE dengan lima checkbox terpenuhi; M0-04/05 ditambah evidence; M1-01/05 menjadi BLOCKED dengan evidence. Tidak ada perubahan unrelated pada plan.
+`doc/backend/ouput/IMPLEMENTATION_STATUS.md` dan `LLM_HANDOFF.txt` dibuat sebagai progress/handoff. Audit lama `AUDIT_BACKEND_DOCS.md` dan `LLM_CONTEXT.txt` tetap ada sebagai history; status parser/Ajv pada audit lama telah superseded oleh batch ini.
+
+ARSITEKTUR / KONTRAK
+Rust Stable + Axum/Tokio + Tower/tower-http + SeaORM/PostgreSQL + Moka. Feature modular monolith, 10 modules, masing-masing Presentation/Application/Domain/Infrastructure; Infrastructure mengimplementasikan port sisi consumer. Backend masih SCAFFOLDED_ONLY: main Hello world, layer files/test files komentar; tidak ada service/API/database functionality.
+22 canonical JSON, delapan domain, 25 reader, 24 public GET. OpenAPI backend memakai meta timestamp/version/sourceMode static_snapshot|live_database; 404 NOT_FOUND. Performance 200 wajib metrics dan distribution; unknown year404 dan known incomplete year503 adalah rancangan kontrak, belum runtime diuji. Code provider frontend `BALMON_PUBLIC_INFORMATION_SOURCE`. Canonical official data dan frontend tidak diubah.
+
+EVIDENCE VERIFIKASI TERAKHIR
+PASS: CodeGraph Windows 1.6.2 status, 279 indexed files/2.980 nodes/6.446 edges, up to date; query/callers/callees/impact/affected/explore dilakukan; sync setelah edit sudah up to date. Shell WSL codegraph blocked karena node PATH, MCP graph kosong; Windows Node 24.21.0 dan Rust/Cargo 1.99.1 tersedia.
+PASS: `@dbml/core` 11.0.1 Parser dbmlv2 + PostgreSQL DDL export26tables/26checks/11FK (SQL not executed); Redocly CLI 2.75.0 lint OpenAPI exit0/3 warnings; isolated Ajv strict frontend config validates22 canonical JSON; path parity24/reader25; isolated Ajv backend schema validates192 response examples/eight schema fixtures, including contacts metadata and functions codes08/09. Runtime performance HTTP fixtures NOT RUN.
+PASS: Cargo Windows metadata `--locked --offline --no-deps`; `cargo fmt --all -- --check`; static 10 module exports + 50 scaffold files, 40 layer comments. No backend functionality test exists.
+BLOCKED: Linux Cargo 1.99.1 isolated `cargo check --manifest-path /project/Cargo.toml --locked --offline --all-targets --all-features`, errno v0.3.14 unavailable in read-only offline registry. Earlier sandbox attempt failed on rustc shared library; LD_LIBRARY_PATH correction allowed the offline check to reveal missing crate. Clippy/test NOT RUN; no zero-test claim. M1-01 verification-only rules prohibit dependency installation/update; discuss appropriate verification scope before changing this gate.
+Environment: DBML/Redocly/Ajv and isolated Cargo check run under Linux user/network/mount/PID namespaces, input/toolchain read-only, isolated scratch HOME/TMPDIR, environment allowlist and CPU/memory/process/file limits. Node Linux24.13.0, Rust1.99.1, @dbml/core11.0.1, Redocly2.75.0 were provisioned temporarily under `/tmp/balmon-task3-tools-Bgsx7T`; Node/rustup checksums matched official checksum files. No project Cargo dependencies/lockfile or system toolchain changed. Tool directory is ephemeral.
+Source protection: 477 hashes match previous snapshot, no frontend/backend/canonical/supporting source changed. Dirty Git state before task3: 158 root entries, 126 nested frontend entries. Do not reset/clean or claim those changes are yours. rtk unavailable.
+
+DECISIONS BLOCKING OWNER APPROVAL
+Execution plan §2.6/M0-07 and task3 explicitly require owner decisions where specified. Reviewable technical proposals: `doc/backend/BACKEND_BLUEPRINT.md` §7.12 (HTTP/security) and §9.8 (DBML/FK/import/audit/cache), `doc/backend/database.dbml`, `doc/backend/openapi.v1.yaml`. The DBML exporter adds DEFERRABLE INITIALLY IMMEDIATE to all 11 FKs although source does not explicitly specify deferrability; review expected migration behavior. SQL was not executed. Official area/leader/statistical year/functions metrics remain unresolved; SSR/hybrid/rebuild, deployment topology, media production and CMS workflow remain undecided. Never claim owner approved merely because recommendation exists.
+Ask owner whether to approve M1 HTTP baseline and explicitly allow safe deferral of M2–M6/data decisions while retaining M0 BLOCKED, or require full M0 decisions before any M1 implementation. Treat responses as authorization only for stated scope; do not conflate project data with guessed facts. Offline-cache boundary also needs a permissible verification approach; never update Cargo.lock unnecessarily.
+
+NEXT EXACT TASK
+After owner decision: document what was approved or deferred, then proceed only with M1-02/03 if their dependencies/gate are explicitly satisfied. Preserve no-UI-redesign rule; add meaningful tests and run Rust gates in an appropriately isolated environment. If owner requires full M0, continue M0-02/03/05/06/07 after necessary decisions, before implementing M1. Do not begin production migration/deployment. Consult `IMPLEMENTATION_STATUS.md` for all49 IDs, dependencies, evidence and full commands.

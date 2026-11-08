@@ -1,0 +1,10 @@
+﻿waktu,no,kota,alat,frekuensi_mhz,mode,call_sign,status,level_audio_dbfs,durasi_detik,keterangan
+2026-10-21T10:57:27,1,"Hainan, China",SW Broadcast,21.490000,AM,CNR 1 Voice of China,TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:57:32,2,"Miaoli, Taiwan",SW Broadcast,21.490000,AM,SOH Xi Wang Zhi Sheng,TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:57:37,3,"Ibaragi, Jepang",SW Broadcast,21.500000,AM,NHK World Radio Japan,ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:57:41,4,"Miaoli, Taiwan",SW Broadcast,21.550000,AM,SOH Xi Wang Zhi Sheng,ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:57:46,5,"Miaoli, Taiwan",SW Broadcast,21.645000,AM,SOH Xi Wang Zhi Sheng,TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:57:50,6,"Miaoli, Taiwan",SW Broadcast,21.650000,AM,SOH Xi Wang Zhi Sheng,TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:57:54,7,"Miaoli, Taiwan",SW Broadcast,21.780000,AM,SOH Xi Wang Zhi Sheng,ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:57:59,8,"Hainan, China",SW Broadcast,21.800000,AM,CNR 1 Voice of China,TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:58:02,9,"Miaoli, Taiwan",SW Broadcast,21.820000,AM,SOH Xi Wang Zhi Sheng,TIDAK ADA SUARA,,3,Penilaian suara manual

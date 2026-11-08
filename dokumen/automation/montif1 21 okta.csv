@@ -1,0 +1,21 @@
+﻿waktu,no,kota,alat,frekuensi_mhz,mode,call_sign,status,level_audio_dbfs,durasi_detik,keterangan
+2026-10-21T10:51:24,1,Taiwan,SW/MW Broadcast,1.422000,AM,RTI Taiwan (1422 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:51:45,2,Palangkaraya,SW Broadcast,3.325000,AM,VOI Palangkaraya (3325 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:51:51,3,Jakarta,SW Broadcast,4.755000,AM,VOI Jakarta (4755 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:51:57,4,Indonesia,SW Broadcast,7.203000,AM,RRI Pro 3 (7203 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:01,5,Nabire,SW Broadcast,7.290000,AM,RRI Nabire (7290 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:05,6,China,SW Broadcast,9.535000,AM,CRI China (9535 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:10,7,Korea Selatan,SW Broadcast,9.570000,AM,KBS World Radio (9570 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:14,8,Jakarta,SW Broadcast,9.690000,AM,VOI Jakarta (9690 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:18,9,Vietnam,SW Broadcast,9.840000,AM,Voice of Vietnam (9840 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:25,10,Taiwan,SW Broadcast,11.915000,AM,RTI Taiwan (11915 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:29,11,China,SW Broadcast,11.955000,AM,CRI China (11955 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:34,12,Australia,SW Broadcast,11.965000,AM,Reach Beyond Aus (11965 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:40,13,Vietnam,SW Broadcast,12.020000,AM,Voice of Vietnam (12020 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:46,14,Jepang,SW Broadcast,13.600000,AM,NHK Radio Japan (13600 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:51,15,China,SW Broadcast,15.135000,AM,CRI China (15135 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:55,16,India,SW Broadcast,15.260000,AM,AIR Akashvani (15260 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:52:59,17,Guam,SW Broadcast,15.500000,AM,AWR KSDA Guam (15500 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:53:03,18,China,SW Broadcast,17.605000,AM,CRI China (17605 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:53:07,19,Uzbekistan,SW Broadcast,17.670000,AM,Bible Voice Tashkent (17670 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual
+2026-10-21T10:53:11,20,China,SW Broadcast,17.735000,AM,CRI China (17735 kHz),TIDAK ADA SUARA,,3,Penilaian suara manual

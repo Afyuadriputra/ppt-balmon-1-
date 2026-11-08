@@ -1,0 +1,974 @@
+
+Project BALMON_PEKANBARU {
+  database_type: 'PostgreSQL'
+  Note: '''
+    Database Blueprint v1.1
+    Portal Balai Monitor Spektrum Frekuensi Radio
+    Kelas I Pekanbaru
+
+    26 tabel, 8 domain data, CMS dan RBAC.
+    Status: PROPOSED M0 remediation - belum disetujui atau diimplementasikan.
+    Parser validation NOT RUN di WSL; lihat laporan post-remediation.
+    26 tabel bisnis; persistent session store dapat menambah tabel library.
+  '''
+}
+
+// ==========================================
+// ENUM DEFINITIONS
+// ==========================================
+
+Enum content_status {
+  draft
+  review
+  published
+  archived
+}
+
+Enum document_category {
+  regulasi
+  layanan
+  laporan
+}
+
+Enum portal_category {
+  panduan
+  perizinan
+  pembayaran
+  pengaduan
+  nelayan
+}
+
+Enum district_type {
+  Kabupaten
+  Kota
+}
+
+Enum criticality_level {
+  Kritis
+  Tinggi
+  Standar
+}
+
+// ==========================================
+// 1. PUBLICATIONS DOMAIN
+// ==========================================
+
+// TABEL 01 - Artikel Berita
+Table articles {
+  checks {
+    `status <> 'published' OR (published_on IS NOT NULL AND deleted_at IS NULL)` [name: 'chk_articles_public_complete']
+  }
+
+  id uuid [pk]
+  canonical_id varchar(100) [unique, not null]
+  slug varchar(255) [unique, not null]
+  title varchar(500) [not null]
+  excerpt text [not null]
+  content jsonb [not null]
+  published_on date
+  category varchar(100) [not null]
+  source jsonb [not null]
+  image jsonb
+  video jsonb
+  featured boolean [not null, default: false]
+  status content_status [not null, default: 'draft']
+
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  deleted_at timestamptz
+
+  indexes {
+    (status, published_on)
+    (featured, status)
+    category
+  }
+
+  Note: '''
+    Sumber: publications/articles.json
+    Data awal: 8 artikel.
+
+    content berupa array paragraf string.
+    source, image dan video mempertahankan
+    struktur canonical JSON.
+
+    publishedAt pada API berasal dari published_on.
+    published pada API berasal dari status.
+    '''
+}
+
+// TABEL 02 - Artikel Edukasi
+Table education_topics {
+  id uuid [pk]
+  canonical_id varchar(100) [unique, not null]
+  slug varchar(255) [unique, not null]
+  title varchar(500) [not null]
+  summary text [not null]
+  content jsonb [not null]
+  icon varchar(100) [not null]
+  source jsonb [not null]
+  image jsonb
+  video_id varchar(100)
+
+  is_active boolean [not null, default: true]
+
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    is_active
+  }
+
+  Note: '''
+    Sumber: publications/education.json
+    Data awal: 7 topik edukasi.
+
+    video_id adalah ID video eksternal,
+    bukan foreign key ke featured_videos.
+  '''
+}
+
+// TABEL 03 - Video Unggulan
+Table featured_videos {
+  id uuid [pk]
+  youtube_video_id varchar(100) [unique, not null]
+  eyebrow varchar(150)
+  title varchar(500) [not null]
+  aria_label text [not null]
+  youtube_url text [not null]
+  embed_url text [not null]
+  thumbnail_url text [not null]
+  thumbnail_alt text [not null]
+
+  is_active boolean [not null, default: true]
+
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '''
+    Sumber: publications/featured-video.json
+    Data awal: 1 video.
+
+    Maksimal satu video aktif untuk endpoint
+    featured-video. Perlu partial unique index
+    atau aturan transaksi pada PostgreSQL.
+  '''
+}
+
+// ==========================================
+// 2. PUBLIC INFORMATION DOMAIN
+// ==========================================
+
+// TABEL 04 - Dokumen Publik
+Table public_documents {
+  checks {
+    `year ~ '^[0-9]{4}$'` [name: 'chk_public_documents_year']
+  }
+
+  id uuid [pk]
+  canonical_id varchar(100) [unique, not null]
+
+  title varchar(500) [not null]
+  category document_category [not null]
+  year varchar(4) [not null]
+  number varchar(255)
+  description text [not null]
+
+  source jsonb [not null]
+  file_url text
+  media_asset_id uuid
+
+  status content_status [not null, default: 'published']
+
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (category, year)
+    status
+  }
+
+  Note: '''
+    Sumber: public_information/documents.json
+    Data awal: 10 dokumen.
+
+    year wajib dipertahankan sebagai string
+    empat digit dalam API frontend.
+
+    source.url bukan selalu URL PDF.
+    file_url dan media_asset_id bersifat opsional.
+  '''
+}
+
+// TABEL 20 - Pengaturan PPID
+Table ppid_settings {
+  checks {
+    `id = 1` [name: 'chk_ppid_settings_singleton']
+  }
+
+  id smallint [pk, default: 1]
+
+  eyebrow varchar(150) [not null]
+  title varchar(500) [not null]
+  description text [not null]
+  legal_basis text [not null]
+
+  procedures jsonb [not null]
+  rights jsonb [not null]
+  contact jsonb [not null]
+  source jsonb [not null]
+
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '''
+    Sumber: public_information/ppid.json
+    Singleton: id = 1.
+
+    Menyimpan konfigurasi informasi PPID,
+    bukan data pribadi pemohon.
+  '''
+}
+
+// ==========================================
+// 3. SERVICES DOMAIN
+// ==========================================
+
+// TABEL 05 - Katalog Layanan
+Table services_catalog {
+  checks {
+    `home_order >= 0` [name: 'chk_services_home_order']
+  }
+
+  id uuid [pk]
+  canonical_id varchar(100) [unique, not null]
+  slug varchar(255) [unique, not null]
+
+  title varchar(255) [not null]
+  summary text [not null]
+  description text [not null]
+  icon varchar(100) [not null]
+
+  featured boolean [not null, default: false]
+  home_order integer [not null, default: 99]
+  active boolean [not null, default: true]
+
+  requirements jsonb
+  steps jsonb
+  official_url text
+
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    home_order
+    (active, featured)
+  }
+
+  Note: '''
+    Sumber: services/catalog.json
+    Data awal: 4 layanan.
+
+    requirements dan steps berupa array string.
+    home_order menentukan urutan di beranda.
+  '''
+}
+
+// TABEL 06 - Portal Layanan
+Table service_portals {
+  checks {
+    `sort_order >= 0` [name: 'chk_portals_sort_order']
+  }
+
+  id uuid [pk]
+  canonical_id varchar(100) [unique, not null]
+
+  title varchar(255) [not null]
+  category portal_category [not null]
+  url text [not null]
+  source_url text [not null]
+
+  sort_order integer [not null, default: 0]
+  is_active boolean [not null, default: true]
+
+  indexes {
+    category
+    (is_active, sort_order)
+  }
+
+  Note: '''
+    Sumber: services/portals.json
+    Data awal: 8 portal eksternal.
+
+    URL harus menggunakan skema aman dan
+    divalidasi sebelum disimpan.
+  '''
+}
+
+// TABEL 07 - FAQ
+Table service_faqs {
+  checks {
+    `sort_order >= 0` [name: 'chk_faqs_sort_order']
+  }
+
+  id uuid [pk]
+  import_key varchar(100) [unique]
+
+  question text [not null]
+  answer text [not null]
+
+  sort_order integer [not null, default: 0]
+  is_active boolean [not null, default: true]
+
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (is_active, sort_order)
+  }
+
+  Note: '''
+    Sumber: services/faqs.json
+    Data awal: 4 FAQ.
+
+    JSON awal belum mempunyai ID.
+    import_key dipakai untuk idempotensi impor.
+  '''
+}
+
+// TABEL 08 - Pengaturan Pengaduan
+Table complaint_settings {
+  checks {
+    `id = 1` [name: 'chk_complaint_settings_singleton']
+  }
+
+  id smallint [pk, default: 1]
+
+  eyebrow varchar(150) [not null]
+  title varchar(500) [not null]
+  description text [not null]
+  action_label varchar(150) [not null]
+
+  required_information jsonb [not null]
+  steps jsonb [not null]
+  channels jsonb [not null]
+
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '''
+    Sumber: services/complaint.json
+    Singleton: id = 1.
+
+    Data SOP dan kontak pengaduan.
+    Bukan tabel tiket pengaduan online.
+  '''
+}
+
+// ==========================================
+// 4. INSTITUTION & CONTACTS DOMAIN
+// ==========================================
+
+// TABEL 09 - Kontak dan Informasi Kantor
+Table office_settings {
+  checks {
+    `id = 1` [name: 'chk_office_settings_singleton']
+  }
+
+  id smallint [pk, default: 1]
+
+  office_name varchar(255) [not null]
+  parent_agency varchar(255) [not null]
+
+  address jsonb [not null]
+  phone jsonb [not null]
+  whatsapp jsonb [not null]
+  email jsonb [not null]
+  service_hours jsonb [not null]
+  location jsonb [not null]
+  socials jsonb [not null]
+
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '''
+    Sumber: contacts/office.json
+    Singleton: id = 1.
+
+    Mempertahankan struktur nested DTO.
+    CMS hanya perlu operasi GET dan PATCH.
+  '''
+}
+
+// TABEL 10 - Pengaturan Struktur Organisasi
+Table organization_settings {
+  checks {
+    `id = 1` [name: 'chk_organization_settings_singleton']
+  }
+
+  id smallint [pk, default: 1]
+
+  title varchar(255) [not null]
+  description text [not null]
+
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '''
+    Sumber: institution/organization.json
+
+    Berisi judul dan deskripsi organisasi.
+    Singleton: id = 1.
+  '''
+}
+
+// TABEL 11 - Identitas Personel Organisasi
+Table organization_people {
+  id uuid [pk]
+
+  import_key varchar(100) [unique]
+  full_name varchar(255) [not null]
+  photo_asset_id uuid
+  is_active boolean [not null, default: true]
+
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    full_name
+  }
+
+  Note: '''
+    Identitas individu dipisahkan dari jabatan.
+
+    Nama tidak diberi UNIQUE karena
+    individu berbeda dapat memiliki nama sama.
+  '''
+}
+
+// TABEL 12 - Penugasan dan Jabatan
+Table organization_assignments {
+  checks {
+    `sort_order >= 0` [name: 'chk_organization_sort_order']
+    `ended_at IS NULL OR started_at IS NULL OR ended_at >= started_at` [name: 'chk_organization_dates']
+  }
+
+  id uuid [pk]
+  person_id uuid [not null]
+  import_key varchar(100) [unique]
+
+  role_title varchar(255) [not null]
+  grade_display varchar(255) [not null]
+  sort_order integer [not null, default: 0]
+
+  started_at date
+  ended_at date
+  is_active boolean [not null, default: true]
+
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    person_id
+    (is_active, sort_order)
+  }
+
+  Note: '''
+    Sumber: institution/organization.json
+    Data awal: 5 entri penugasan.
+
+    Satu individu boleh memegang lebih dari
+    satu penugasan.
+
+    Tanggal jabatan belum tersedia pada JSON.
+    Biarkan NULL sampai diverifikasi.
+  '''
+}
+
+// ==========================================
+// 5. COVERAGE DOMAIN
+// ==========================================
+
+// TABEL 13 - Wilayah Pengawasan
+Table coverage_districts {
+  checks {
+    `area_km2 >= 0 AND population >= 0 AND total_isr >= 0 AND monitored_isr >= 0` [name: 'chk_coverage_nonnegative']
+    `monitored_isr <= total_isr` [name: 'chk_coverage_monitored_bounds']
+    `reference_year IS NULL OR reference_year BETWEEN 1000 AND 9999` [name: 'chk_coverage_reference_year']
+  }
+
+  id uuid [pk]
+  district_key varchar(100) [unique, not null]
+
+  name varchar(150) [not null]
+  type district_type [not null]
+
+  area_km2 numeric(12,2) [not null]
+  population bigint [not null]
+  total_isr integer [not null]
+  monitored_isr integer [not null]
+
+  reference_year integer
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    type
+    reference_year
+  }
+
+  Note: '''
+    Sumber: coverage/districts.json
+    Data awal: 12 kabupaten/kota.
+
+    Field mengikuti JSON aktual:
+    name, type, areaKm2, population,
+    totalIsr dan monitoredIsr.
+
+    Koordinat, tipe stasiun dan status
+    tidak tersedia pada sumber aktual.
+
+    reference_year nullable karena tahun
+    sumber belum dinyatakan secara eksplisit.
+  '''
+}
+
+// TABEL 14 - Pemanfaatan Spektrum
+Table spectrum_applications {
+  id uuid [pk]
+  canonical_id varchar(100) [unique, not null]
+
+  label varchar(255) [not null]
+  service_category varchar(255) [not null]
+  frequency_band varchar(255) [not null]
+  user_sector text [not null]
+  criticality criticality_level [not null]
+  description text [not null]
+
+  image_url text
+  image_alt text
+
+  is_active boolean [not null, default: true]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    criticality
+    is_active
+  }
+
+  Note: '''
+    Sumber: coverage/spectrum-applications.json
+    Data awal: 6 sektor.
+
+    Mempertahankan kategori layanan,
+    pita frekuensi dan metadata gambar.
+  '''
+}
+
+// TABEL 15 - Ringkasan Coverage
+Table coverage_summary {
+  checks {
+    `id = 1` [name: 'chk_coverage_summary_singleton']
+  }
+
+  id smallint [pk, default: 1]
+
+  province varchar(100) [not null]
+  coverage_area text [not null]
+  area_km2_display varchar(100) [not null]
+  infrastructure text [not null]
+  statistics jsonb [not null]
+
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '''
+    Sumber: coverage/summary.json
+    Singleton: id = 1.
+
+    areaKm2 sumber berupa teks terformat.
+    Tidak dipaksakan menjadi numerik.
+    '''
+}
+
+// ==========================================
+// 6. PERFORMANCE DOMAIN
+// ==========================================
+
+// TABEL 16 - Metrik Kinerja Tahunan
+Table performance_records {
+  checks {
+    `year BETWEEN 1000 AND 9999` [name: 'chk_metrics_year']
+  }
+
+  id uuid [pk]
+
+  year integer [unique, not null]
+  eyebrow varchar(150) [not null]
+  title jsonb [not null]
+  description text [not null]
+
+  document_id uuid [not null]
+  metrics jsonb [not null]
+  chart jsonb [not null]
+
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+
+  Note: '''
+    Sumber: performance/metrics-2025.json
+    Data awal: 1 tahun (2025).
+
+    metrics mempertahankan field aktual:
+    id, value, label, caption, icon,
+    dan highlight jika tersedia.
+
+    chart mempertahankan SVG areaPath
+    dan linePath sebagai data awal.
+  '''
+}
+
+// TABEL 17 - Distribusi Kinerja
+Table performance_distributions {
+  checks {
+    `year BETWEEN 1000 AND 9999 AND total_value >= 0` [name: 'chk_distribution_values']
+  }
+
+  id uuid [pk]
+  year integer [unique, not null]
+
+  eyebrow varchar(150) [not null]
+  title varchar(500) [not null]
+
+  total_value integer [not null]
+  total_label varchar(150) [not null]
+  gradient_css text [not null]
+
+
+  Note: '''
+    Sumber: performance/distribution-2025.json
+    Satu distribusi untuk setiap tahun.
+
+    totalValue dikonversi dari string
+    setelah validasi numerik.
+  '''
+}
+
+// TABEL 18 - Detail Kategori Distribusi
+Table performance_distribution_items {
+  checks {
+    `count >= 0 AND sort_order >= 0` [name: 'chk_distribution_item_values']
+  }
+
+  id uuid [pk]
+  distribution_id uuid [not null]
+
+  label varchar(255) [not null]
+  count integer [not null]
+  color varchar(20) [not null]
+  sort_order integer [not null, default: 0]
+
+  indexes {
+    (distribution_id, sort_order)
+  }
+
+  Note: '''
+    Data awal: 4 kategori distribusi 2025.
+
+    Jumlah seluruh count harus sama
+    dengan total_value pada parent.
+  '''
+}
+
+// TABEL 19 - Laporan Kinerja
+Table performance_reports {
+  checks {
+    `year BETWEEN 1000 AND 9999` [name: 'chk_report_year']
+    `ikm IS NULL OR ikm >= 0` [name: 'chk_report_ikm']
+    `ipak IS NULL OR ipak >= 0` [name: 'chk_report_ipak']
+    `sla_availability IS NULL OR sla_availability BETWEEN 0 AND 100` [name: 'chk_report_sla']
+    `total_output IS NULL OR total_output >= 0` [name: 'chk_report_total']
+  }
+
+  id uuid [pk]
+  canonical_id varchar(100) [unique, not null]
+
+  year integer [unique, not null]
+  document_id uuid [not null]
+
+  title varchar(500) [not null]
+  ikm numeric(5,2)
+  ipak numeric(5,2)
+  sla_availability numeric(5,2)
+  total_output integer
+
+  indexes {
+    document_id
+  }
+
+  Note: '''
+    Sumber: performance/reports.json
+    Data awal: 1 laporan.
+
+    documentId canonical dicocokkan dengan
+    public_documents.canonical_id.
+
+    Contoh: lap-lakip-2025.
+  '''
+}
+
+// ==========================================
+// 7. SITE CONTENT DOMAIN
+// ==========================================
+
+// TABEL 21 - Hero Homepage
+Table hero_settings {
+  checks {
+    `id = 1` [name: 'chk_hero_settings_singleton']
+  }
+
+  id smallint [pk, default: 1]
+
+  eyebrow varchar(150) [not null]
+  title jsonb [not null]
+  description text [not null]
+  action jsonb [not null]
+  slogan jsonb [not null]
+  background_asset_keys jsonb [not null]
+
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '''
+    Sumber: site_content/hero.json
+    Singleton: id = 1.
+
+    backgroundAssetKeys hanya boleh menggunakan
+    identifier aset yang dikenali frontend.
+  '''
+}
+
+// ==========================================
+// 8. CMS MEDIA INFRASTRUCTURE
+// ==========================================
+
+// TABEL 22 - Media Assets
+Table media_assets {
+  checks {
+    `size_bytes >= 0` [name: 'chk_media_size']
+    `checksum_sha256 ~ '^[0-9a-fA-F]{64}$'` [name: 'chk_media_checksum']
+  }
+
+  id uuid [pk]
+
+  original_filename varchar(255) [not null]
+  storage_key text [unique, not null]
+  mime_type varchar(100) [not null]
+  size_bytes bigint [not null]
+  checksum_sha256 varchar(64) [not null]
+  alt_text text
+
+  uploaded_by uuid
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    checksum_sha256
+    uploaded_by
+  }
+
+  Note: '''
+    Menyimpan metadata gambar dan dokumen CMS.
+
+    Berkas fisik disimpan pada storage.
+    URL eksternal existing tidak wajib diunduh.
+  '''
+}
+
+// ==========================================
+// 9. CMS AUTHENTICATION & RBAC
+// ==========================================
+
+// TABEL 23 - Administrator
+Table admin_users {
+  id uuid [pk]
+
+  username varchar(100) [unique, not null]
+  email varchar(255) [unique, not null]
+  password_hash text [not null]
+  full_name varchar(255) [not null]
+
+  is_active boolean [not null, default: true]
+  last_login_at timestamptz
+
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    is_active
+  }
+
+  Note: '''
+    Akun khusus CMS admin.
+
+    Password wajib disimpan sebagai
+    secure password hash.
+  '''
+}
+
+// TABEL 24 - Role Admin
+Table admin_roles {
+  id uuid [pk]
+
+  role_key varchar(100) [unique, not null]
+  name varchar(150) [not null]
+  description text
+
+  Note: '''
+    Role awal:
+    super_admin
+    content_editor
+    reviewer_publisher
+    data_operator
+
+    Permission matrix dikelola oleh backend.
+  '''
+}
+
+// TABEL 25 - User Role Assignment
+Table admin_user_roles {
+  user_id uuid [not null]
+  role_id uuid [not null]
+
+  assigned_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (user_id, role_id) [pk]
+    role_id
+  }
+
+  Note: '''
+    Relasi many-to-many antara
+    administrator dan role.
+  '''
+}
+
+// ==========================================
+// 10. AUDIT DOMAIN
+// ==========================================
+
+// TABEL 26 - Audit Log
+Table audit_logs {
+  id uuid [pk]
+
+  actor_id uuid
+  action varchar(100) [not null]
+  entity_type varchar(100) [not null]
+  entity_id varchar(100) [not null]
+
+  old_values jsonb
+  new_values jsonb
+  ip_address varchar(45)
+
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    actor_id
+    (entity_type, entity_id)
+    created_at
+  }
+
+  Note: '''
+    Mencatat perubahan administratif.
+
+    Password, token dan secrets
+    tidak boleh dimasukkan ke snapshot audit.
+
+    actor_id nullable untuk aktivitas sistem.
+  '''
+}
+
+// ==========================================
+// FOREIGN KEY RELATIONSHIPS
+// ==========================================
+
+// Organization
+Ref: organization_assignments.person_id > organization_people.id [delete: restrict, update: restrict]
+Ref: organization_people.photo_asset_id > media_assets.id [delete: restrict, update: restrict]
+
+// Public documents & media
+Ref: public_documents.media_asset_id > media_assets.id [delete: restrict, update: restrict]
+
+// Performance
+Ref: performance_records.document_id > public_documents.id [delete: restrict, update: restrict]
+Ref: performance_distributions.year > performance_records.year [delete: restrict, update: restrict]
+Ref: performance_distribution_items.distribution_id > performance_distributions.id [delete: restrict, update: restrict]
+Ref: performance_reports.document_id > public_documents.id [delete: restrict, update: restrict]
+
+// CMS administrator
+Ref: admin_user_roles.user_id > admin_users.id [delete: restrict, update: restrict]
+Ref: admin_user_roles.role_id > admin_roles.id [delete: restrict, update: restrict]
+
+// CMS media uploader
+Ref: media_assets.uploaded_by > admin_users.id [delete: restrict, update: restrict]
+
+// Audit log actor
+Ref: audit_logs.actor_id > admin_users.id [delete: restrict, update: restrict]
+
+// ==========================================
+// TABLE GROUPS
+// ==========================================
+
+TableGroup Publications {
+  articles
+  education_topics
+  featured_videos
+}
+
+TableGroup PublicInformation {
+  public_documents
+  ppid_settings
+}
+
+TableGroup Services {
+  services_catalog
+  service_portals
+  service_faqs
+  complaint_settings
+}
+
+TableGroup Institution {
+  office_settings
+  organization_settings
+  organization_people
+  organization_assignments
+}
+
+TableGroup Coverage {
+  coverage_districts
+  spectrum_applications
+  coverage_summary
+}
+
+TableGroup Performance {
+  performance_records
+  performance_distributions
+  performance_distribution_items
+  performance_reports
+}
+
+TableGroup SiteContent {
+  hero_settings
+}
+
+TableGroup CMSInfrastructure {
+  media_assets
+  admin_users
+  admin_roles
+  admin_user_roles
+  audit_logs
+}
+
+// REMEDIATION CONTRACT — PROPOSED, not applied SQL.
+// FK delete/update restrict preserves references; archive/disable instead of deleting.
+// Session store schema/migration cleanup belongs to auth; not yet in these 26 tables.
+// Application validates JSONB shapes, public field completeness and distribution SUM.
+// SUM(count)=total_value is a cross-row invariant: lock parent and update children
+// in one transaction. A row CHECK cannot enforce this aggregate.
+// Application updates updated_at on every mutation; default now() is insert-only.
+// Import keys and pinned-snapshot conflict policy: BACKEND_BLUEPRINT.md section 9.8.
+// Null import_key allows CMS-created records, never canonical-seeded records.
+// Partial unique active featured video index must be included and race-tested in
+// SeaORM migration (DBML Note alone is not enforcement). No physical DDL generated.

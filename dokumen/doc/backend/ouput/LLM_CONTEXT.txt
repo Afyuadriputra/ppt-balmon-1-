@@ -1,0 +1,221 @@
+M0 DOCUMENTATION REMEDIATION — STANDALONE LLM CONTEXT (TASK2)
+Tanggal: 5 November 2026.
+
+A. Project identity and current documents
+Proyek: Portal Balai Monitor Spektrum Frekuensi Radio Kelas I Pekanbaru (Balmon Pekanbaru).
+Repo Windows: D:\KERJA\magang hub\batch2\Balaimonitor\balmon-pekanbaru.
+Repo WSL: /mnt/d/KERJA/magang hub/batch2/Balaimonitor/balmon-pekanbaru.
+Scope task2: documentation/specification only; tidak ada implementasi Rust/frontend/canonical, perubahan credential/database atau deployment.
+Task1 menemukan plan kosong, OpenAPI backend missing dan 21 finding. Saat task2 mulai plan sudah 1.882 baris; 49 ID existing dipertahankan/dilengkapi. Current artifacts: AGENTS v2.1; doc/backend/BACKEND_BLUEPRINT.md v1.1.0; BACKEND_EXECUTION_PLAN.md v1.1.0; database.dbml PROPOSED; openapi.v1.yaml baru; dua laporan ouput post-remediation. Lima dokumen/spec utama dan dua laporan tersedia/nonempty. Historical supporting docs tetap read-only, dengan register SUPERSEDED di Blueprint §6.9; contoh lama tidak boleh menjadi source baseline.
+
+B. Verified architecture and implementation baseline
+Arah stack dari AGENTS: Rust Stable, Axum, Tokio, Tower/tower-http, SeaORM/PostgreSQL/SeaORM Migration, Moka, Serde, validator, utoipa, tracing, server-side sessions, Argon2id. Detail kebijakan baru PROPOSED, bukan otomatis disetujui melalui task dokumentasi.
+Feature modular monolith satu deployable; 10 modul: publications, services, public_info, institution, coverage, performance, contacts, site_content, auth, media. Presentation→Application→Domain; Infrastructure implements consumer-owned ports; app.rs/state.rs composition root. Tidak menambah feature crate atau generic repository.
+Backend tetap SCAFFOLDED_ONLY: Cargo/lock ada; 10 modul × empat layer berupa komentar; main Hello world; shared/middleware/infra/app/config/state komentar; tiga test files komentar. Tidak mengklaim compilation atau feature/runtime PASS. Empat static JSON copies tersedia dan MATCH; adapter static_data belum implemented.
+DBML: 26 tabel, 11 FK, lima enum, 26 named checks termasuk enam singleton. Sepuluh unique inline/index ganda dihapus. FK delete/update RESTRICT adalah PROPOSED. Field wajib public diperketat NOT NULL; article date nullable untuk draft dengan publish check; tanggal jabatan dan reference_year yang tak diketahui tetap NULL. SUM anak distribusi memerlukan Application transaction, bukan row CHECK. DBML parser NOT RUN; tidak ada migration/DDL execution.
+
+C. Public contract and frontend facts
+22 canonical JSON, delapan domain, 11 array + 11 object; 25 reader, 24 GET paths sama dengan frontend. Klasifikasi 18 database/hybrid + empat static masih PROPOSED. Tidak ada wrapper value/Count pada canonical; wrapper hanya ekspor historis. Empat snapshot byte/SHA-256 MATCH. Semua 22 file lolos Python Draft202012 + FormatChecker, bukan Ajv.
+OpenAPI backend mandiri: 249 local refs, 52 schema, 25 exact canonical bindings. Admin/auth hanya extension PROPOSED, bukan final paths. Success {success:true,data,meta}; error {success:false,error:{code,message,details?},meta}. Meta wajib timestamp date-time, version1.0.0, sourceMode static_snapshot/live_database; 404 NOT_FOUND. Contoh success Blueprint memakai actual canonical document.
+GET /performance 200 wajib valid PerformanceMetricsDTO plus distribution. Missing year default2025, invalid year400, well-formed unknown year404, known incomplete year503. Tidak membuat distribution/chart/target per metric/koordinat palsu atau fallback ke tahun lain. Delapan fixture schema PASS, dua runtime cases hanya spesifikasi. Composite compatible dengan frontend wire, metrics dan distribution; frontend permissive wire sengaja tidak diubah.
+Provider memakai BALMON_PUBLIC_INFORMATION_SOURCE dan tujuh domain override lainnya. BALMON_DATA_SOURCE_DEFAULT tidak dibaca selector. Tidak ada frontend edit.
+
+D. Policies proposed for owner review
+HTTP request mask→server ID→Trace→response mask→security/error adapter→public compression→6s timeout→body/concurrency limit→scoped router. CORS preflight sebelum auth/CSRF; auth/admin no-store. Pool wait1s/query2s/total6s < frontend8s; angka limit/rate dan trusted proxy config perlu approval/tests. Baseline security sejak M1-03, M4 regresi/completion.
+Rekomendasi PostgreSQL session store dengan migration/cleanup milik Auth; synchronizer CSRF token+exact Origin termasuk pre-auth login/logout; cookie Secure/HttpOnly/host-only/SameSiteLax; same-origin proxy, idle30m/absolute8h sebagai proposal. Session rotation/revocation pada logout/disable/password reset/role change; fresh role/resource checks deny-by-default. Store library/schema, actual topology/origins, matrix dan final Admin API belum approved.
+Atomic domain+audit transaction; failure rollback; invalidate sesudah commit. Async domain read/write guard mengoordinasikan refill dan warm reads; writer set bypass sebelum transaction, cancellation/outcome ambigu meninggalkan bypass sampai recovery clear. Cache failure bukan database rollback. Rekomendasi satu proses saja; multi-instance membutuhkan keputusan koordinasi. Race/cancellation/failure tests M4-04 memakai fixture mutasi tanpa menunggu CMS.
+Import memakai pin SHA-256 snapshot+mapping version, insert-only dan visible conflict tanpa menimpa CMS. FAQ positional keys hanya untuk snapshot pin; district hash NFC type/name; person/assignment source pointers+manifest review; alias orang tidak disimpulkan dari nama. Reports internal dan metadata organisasi untuk parity tanpa endpoint baru adalah PROPOSED.
+
+E. Canonical traceability (source/DTO/reader confirmed; database mapping proposed)
+Semua paths GET berprefix /api/v1/public; file source relatif frontend/src/lib/data.
+- `contacts/office.json` → office_settings → contacts → OfficeContactDTO → `/contacts` → getOfficeContact; object/1, hybrid.
+- `coverage/districts.json` → coverage_districts → coverage → DistrictCoverageDTO[] → `/coverage/districts` → getDistricts; array/12, dynamic read-only.
+- `coverage/spectrum-applications.json` → spectrum_applications → coverage → SpectrumApplicationDTO[] → `/coverage/spectrum-applications` → getSpectrumApplications; array/6, dynamic read-only.
+- `coverage/summary.json` → coverage_summary → coverage → CoverageSummaryDTO → `/coverage` → getSummary; object/1, dynamic read-only.
+- `institution/profile.json` → static resource → institution → InstitutionProfileDTO → `/institution` → getProfile; object/1, static.
+- `institution/functions.json` → static resource → institution → OperationalFunctionDTO[] → `/institution/functions` → getFunctions; array/9, static.
+- `institution/legal-bases.json` → static resource → institution → LegalBasisDTO[] → `/institution/legal-bases` → getLegalBases; array/6, static.
+- `institution/organization.json` → organization_settings + organization_people + organization_assignments → institution → OrganizationLeaderDTO[] → `/institution/leaders` → getLeaders; object/1, hybrid.
+- `performance/metrics-2025.json` → performance_records → performance → PerformanceMetricsDTO + distribution → `/performance?year=2025` → getMetrics; object/1, dynamic read-only.
+- `performance/distribution-2025.json` → performance_distributions + performance_distribution_items → performance → PerformanceDistributionDTO in composite → `/performance?year=2025` → getDistribution; object/1, dynamic read-only.
+- `performance/reports.json` → performance_reports → public_documents → performance → reports schema; no public reader → `internal / UNRESOLVED` → none; array/1, dynamic read-only.
+- `public_information/documents.json` → public_documents → public_info → PublicDocumentDTO[] / item → `/documents; /documents/{id}` → getDocuments; getDocumentById; array/10, dynamic managed.
+- `public_information/ppid.json` → ppid_settings → public_info → PpidInfoDTO → `/ppid` → getPpidInfo; object/1, dynamic read-only.
+- `publications/articles.json` → articles → publications → NewsArticleDTO[] / item → `/articles; /articles/{slug}` → getArticles; getArticleBySlug; array/8, dynamic managed.
+- `publications/education.json` → education_topics → publications → EducationTopicDTO[] / item → `/education; /education/{slug}` → getEducationTopics; getEducationTopicBySlug; array/7, dynamic managed.
+- `publications/featured-video.json` → featured_videos → publications → VideoMediaDTO → `/publications/featured-video` → getFeaturedVideo; object/1, hybrid.
+- `services/catalog.json` → services_catalog → services → ServiceItemDTO[] / item → `/services; /services/{slug}` → getCatalog; getServiceBySlug; array/4, dynamic managed.
+- `services/portals.json` → service_portals → services → PortalItemDTO[] → `/portals` → getPortals; array/8, dynamic managed.
+- `services/faqs.json` → service_faqs → services → FaqItemDTO[] → `/faqs` → getFaqs; array/4, dynamic managed.
+- `services/complaint.json` → complaint_settings → services → ComplaintInfoDTO → `/complaints` → getComplaintInfo; object/1, hybrid.
+- `site_content/hero.json` → hero_settings → site_content → HeroContentDTO → `/site-content/hero` → getHero; object/1, hybrid.
+- `site_content/homepage.json` → static resource → site_content → HomepageEditorialDTO → `/site-content/homepage` → getHomepageEditorial; object/1, static.
+
+F. All 21 finding statuses (post-remediation, original severity/category retained)
+
+AUD-001 — RESOLVED (HIGH/MISSING_ARTIFACT)
+Perubahan: Execution plan existing dilengkapi dengan 49 task, DAG, kontrol task, commands, approval, recovery, dan baseline scaffold.
+Bukti: doc/backend/BACKEND_EXECUTION_PLAN.md:L181; doc/backend/BACKEND_EXECUTION_PLAN.md:L189; doc/backend/BACKEND_EXECUTION_PLAN.md:L223; doc/backend/BACKEND_EXECUTION_PLAN.md:L306
+Pemeriksaan: PASS: 49 ID unik, dependensi tersedia, DAG tanpa siklus, kontrol dan acceptance per task.
+Risiko tersisa: Plan berisi 1.882 baris sebelum task2; bukan file kosong lagi. Implementasi dan milestone belum DONE.
+Impact: M0 artifact lengkap; kesiapan M1 dapat dinilai per task.
+
+AUD-002 — RESOLVED (HIGH/MISSING_ARTIFACT)
+Perubahan: OpenAPI backend mandiri dibuat: 24 GET, schema canonical dibundel, admin/auth hanya extension PROPOSED.
+Bukti: doc/backend/openapi.v1.yaml:L2; doc/backend/openapi.v1.yaml:L4294; doc/backend/openapi.v1.yaml:L1856
+Pemeriksaan: PASS: YAML, schema OpenAPI resmi, 249 refs lokal, 24 path, 52 schema dan semantik yang diperiksa.
+Risiko tersisa: Validator semantik pihak ketiga penuh NOT RUN; API belum berjalan; snapshot schema harus dijaga dari drift.
+Impact: M0-04 review; baseline publik M3 tersedia; kontrak admin M5 belum final.
+
+AUD-003 — RESOLVED (HIGH/CONTRACT_MISMATCH)
+Perubahan: Envelope diselaraskan: meta wajib, sourceMode static_snapshot/live_database, 404 NOT_FOUND, contoh success dari dokumen canonical.
+Bukti: doc/backend/BACKEND_BLUEPRINT.md:L763; doc/backend/BACKEND_BLUEPRINT.md:L802; doc/backend/openapi.v1.yaml:L2257; doc/backend/openapi.v1.yaml:L2276
+Pemeriksaan: PASS: 192 contoh respons, dua contoh Blueprint dan fixture metadata negatif.
+Risiko tersisa: Header dan rejection runtime belum diuji; error admin tambahan masih proposal.
+Impact: Baseline envelope M1-03 dan kontrak M3.
+
+AUD-004 — PARTIAL (HIGH/DOCUMENT_CONFLICT)
+Perubahan: Canonical/DTO/Ajv ditetapkan sebagai baseline; contoh Coverage/Performance lama ditandai SUPERSEDED dalam register pusat.
+Bukti: doc/backend/BACKEND_BLUEPRINT.md:L956; doc/backend/BACKEND_BLUEPRINT.md:L1495; doc/backend/BACKEND_BLUEPRINT.md:L1512
+Pemeriksaan: PASS: 25 bundled bindings sama dengan frontend dan register supersession tersedia.
+Risiko tersisa: Supporting docs di luar allowlist tidak diedit. Jika dibaca terpisah masih memuat contoh lama; override register harus ikut dibaca.
+Impact: M0/M2/M3 memakai dokumen utama; revisi supporting mandiri memerlukan task lain.
+
+AUD-005 — RESOLVED (MEDIUM/DOCUMENT_CONFLICT)
+Perubahan: Contoh aktif memakai BALMON_PUBLIC_INFORMATION_SOURCE; global default yang tidak dibaca selector dihapus dari contoh aktif.
+Bukti: doc/backend/BACKEND_BLUEPRINT.md:L1654; doc/backend/BACKEND_BLUEPRINT.md:L1664; doc/backend/BACKEND_BLUEPRINT.md:L965
+Pemeriksaan: PASS: delapan override cocok dengan selector frontend aktual.
+Risiko tersisa: Frontend tidak diubah; contoh lama di supporting diberi override historis.
+Impact: M4-06 memakai konfigurasi yang benar.
+
+AUD-006 — PARTIAL (MEDIUM/SECURITY)
+Perubahan: Urutan request/response middleware, masking, request ID, preflight, timeout 6 detik dan error adapter ditulis eksplisit.
+Bukti: doc/backend/BACKEND_BLUEPRINT.md:L1158; doc/backend/BACKEND_EXECUTION_PLAN.md:L651; doc/backend/BACKEND_EXECUTION_PLAN.md:L1195
+Pemeriksaan: PASS: dokumen menetapkan stack dan budget 6s < 8s; runtime order/rejection NOT RUN.
+Risiko tersisa: Limit, origin, rate, trust proxy dan baseline HTTP masih PROPOSED; memerlukan persetujuan M0-06.
+Impact: M1-03/M4 HTTP menunggu approval; security dasar mulai M1.
+
+AUD-007 — PARTIAL (MEDIUM/DATABASE_DESIGN)
+Perubahan: DBML memuat 26 named checks, termasuk enam singleton; validasi aggregate dimiliki transaksi Application.
+Bukti: doc/backend/database.dbml:L205; doc/backend/database.dbml:L490; doc/backend/database.dbml:L751; doc/backend/BACKEND_BLUEPRINT.md:L1627
+Pemeriksaan: PASS: struktur 26 checks, enam singleton dan FK targets; parser DBML NOT RUN.
+Risiko tersisa: Schema masih PROPOSED, belum disetujui/diterapkan. SUM anak harus diuji sebagai invariant transaksi.
+Impact: M0-05/M2 menunggu parser dan persetujuan.
+
+AUD-008 — PARTIAL (MEDIUM/CONTRACT_MISMATCH)
+Perubahan: Public-required fields diperketat NOT NULL; tanggal artikel draft tetap nullable dengan publish check; tanggal jabatan/tahun yang tidak diketahui tetap NULL.
+Bukti: doc/backend/database.dbml:L456; doc/backend/database.dbml:L501; doc/backend/database.dbml:L606; doc/backend/BACKEND_BLUEPRINT.md:L1627
+Pemeriksaan: PASS: deklarasi struktural dan schema payload; PostgreSQL/mapper tests NOT RUN.
+Risiko tersisa: Public completeness dan model draft tahunan masih proposal; tidak membuat angka/grade pengganti.
+Impact: M0-05/M2 schema/M3 projection memerlukan persetujuan.
+
+AUD-009 — RESOLVED (LOW/DATABASE_DESIGN)
+Perubahan: Sepuluh deklarasi UNIQUE ganda pada indexes dihapus; constraint inline dan indeks lain dipertahankan.
+Bukti: doc/backend/database.dbml:L57; doc/backend/database.dbml:L592; doc/backend/database.dbml:L785
+Pemeriksaan: PASS: tidak ada duplicate inline/index uniqueness pada 26 tabel.
+Risiko tersisa: DDL migration aktual belum dibuat atau diuji parser.
+Impact: M2 tidak menyalin indeks unik ganda.
+
+AUD-010 — PARTIAL (MEDIUM/DATABASE_DESIGN)
+Perubahan: Seluruh 11 FK diberi delete:restrict/update:restrict, disertai alasan retensi per relasi.
+Bukti: doc/backend/database.dbml:L888; doc/backend/database.dbml:L908; doc/backend/BACKEND_BLUEPRINT.md:L1631
+Pemeriksaan: PASS: 11/11 refs mempunyai dua action dan target kolom yang ada.
+Risiko tersisa: Ini rekomendasi konservatif PROPOSED; cleanup eksplisit dan retensinya memerlukan keputusan owner.
+Impact: M0-05/M2 migration FK menunggu persetujuan.
+
+AUD-011 — PARTIAL (MEDIUM/DATA_INTEGRITY)
+Perubahan: Pinned source hash, insert-only/conflict policy, deterministic import keys dan review alias personel dijelaskan.
+Bukti: doc/backend/BACKEND_BLUEPRINT.md:L1610; doc/backend/database.dbml:L313; doc/backend/BACKEND_EXECUTION_PLAN.md:L900
+Pemeriksaan: PASS: traceability 22 sumber dan aturan identitas; seeding/rerun/CMS-conflict tests NOT RUN.
+Risiko tersisa: Manifest dibuat pada M2-05; alias individu dan perubahan snapshot harus ditinjau pemilik data. Nama sama bukan bukti identitas.
+Impact: M0-02/03 dan M2-05 belum siap seeding.
+
+AUD-012 — PARTIAL (MEDIUM/SECURITY)
+Perubahan: Rekomendasi PostgreSQL session store, CSRF token+Origin, expiry, rotation, revocation dan deny-by-default ditulis tanpa final admin paths.
+Bukti: doc/backend/BACKEND_BLUEPRINT.md:L1186; doc/backend/BACKEND_BLUEPRINT.md:L1188; doc/backend/BACKEND_BLUEPRINT.md:L1190; doc/backend/openapi.v1.yaml:L4294
+Pemeriksaan: PASS: opsi, konsekuensi, approval dan acceptance security tercatat; runtime security NOT RUN.
+Risiko tersisa: Library/store schema, topology, cookie origins, role matrix dan API admin belum disetujui.
+Impact: M0-06/M5-01/02; autentikasi/RBAC harus mendahului CRUD.
+
+AUD-013 — PARTIAL (MEDIUM/ARCHITECTURE)
+Perubahan: Atomic audit, post-commit invalidation, guarded refill, bypass sebelum transaksi dan cancellation recovery ditentukan sebagai proposal.
+Bukti: doc/backend/BACKEND_BLUEPRINT.md:L1356; doc/backend/BACKEND_BLUEPRINT.md:L1360; doc/backend/BACKEND_EXECUTION_PLAN.md:L1283; doc/backend/BACKEND_EXECUTION_PLAN.md:L1582
+Pemeriksaan: PASS: ownership/race/failure acceptance tersedia; concurrency/DB/audit tests NOT RUN.
+Risiko tersisa: Jaminan satu proses masih desain; persetujuan, pengukuran dan pengujian race diperlukan; multi-instance belum final.
+Impact: M4-04 dapat memakai fixture mutasi sebelum CMS; semua CRUD M5 wajib atomic audit sejak awal.
+
+AUD-014 — DEFERRED (HIGH/PERFORMANCE)
+Perubahan: Freshness tetap keputusan terbuka; SSR/hybrid direkomendasikan dengan konsekuensi hosting, SLA, slug baru dan rollback.
+Bukti: doc/backend/BACKEND_BLUEPRINT.md:L1693; doc/backend/BACKEND_BLUEPRINT.md:L2008
+Pemeriksaan: PASS: fakta prerender dipertahankan dan tidak ada frontend edit; runtime freshness NOT RUN.
+Risiko tersisa: Owner belum memilih SSR/hybrid/rebuild. Perubahan database tidak menjamin HTML publik otomatis berubah.
+Impact: M0 final/M4-06/M5-07 tertahan; verifikasi scaffold independen.
+
+AUD-015 — PARTIAL (MEDIUM/CONTRACT_MISMATCH)
+Perubahan: Reports direkomendasikan sebagai data pendukung internal; metadata organisasi disimpan untuk parity, leaders saja pada reader; tanpa endpoint ke-25.
+Bukti: doc/backend/BACKEND_BLUEPRINT.md:L1625; doc/backend/BACKEND_BLUEPRINT.md:L1580
+Pemeriksaan: PASS: reports dan organisasi ada pada traceability; 24 path tetap.
+Risiko tersisa: Pilihan ownership/retention/internal CMS masih PROPOSED dan menunggu M0-02.
+Impact: M2-05 dan composition terkait menunggu approval mapping.
+
+AUD-016 — DEFERRED (MEDIUM/DATA_INTEGRITY)
+Perubahan: Luas, pimpinan, tahun statistik dan functions metrics tidak diubah; opsi provenance/owner review dan gate dicatat.
+Bukti: doc/backend/BACKEND_BLUEPRINT.md:L2004; doc/backend/BACKEND_BLUEPRINT.md:L2005; doc/backend/BACKEND_BLUEPRINT.md:L2006; doc/backend/BACKEND_BLUEPRINT.md:L2007
+Pemeriksaan: PASS: canonical dan empat snapshot tetap sama.
+Risiko tersisa: Definisi indikator, identitas/tanggal berlaku, tahun referensi dan ownership metrik belum diputuskan pemilik data.
+Impact: M0 final, seed/publish domain terkait tertahan; verifikasi scaffold tidak bergantung pada data ini.
+
+AUD-017 — RESOLVED (LOW/PATH_MISMATCH)
+Perubahan: Path aktif pada AGENTS/Blueprint/Plan diperbaiki menjadi doc/backend; path sejarah ditandai unavailable.
+Bukti: AGENTS.md:L159; doc/backend/BACKEND_BLUEPRINT.md:L562; doc/backend/BACKEND_EXECUTION_PLAN.md:L15; doc/backend/BACKEND_BLUEPRINT.md:L967
+Pemeriksaan: PASS: tidak ada docs/backend aktif dalam tiga dokumen utama; tujuh artifact nonempty.
+Risiko tersisa: Link lama pada supporting read-only dipertahankan dengan register override.
+Impact: Navigasi M0–M6 benar; histori tidak dihapus.
+
+AUD-018 — RESOLVED (INFO/ARCHITECTURE)
+Perubahan: Temuan positif arsitektur dipertahankan: 10 modul, empat layer, consumer-owned ports, composition root dan pemilik 26 tabel.
+Bukti: doc/backend/BACKEND_BLUEPRINT.md:L487; doc/backend/BACKEND_BLUEPRINT.md:L510
+Pemeriksaan: PASS: desain/source boundary ditelaah; tidak ada perubahan arsitektur implementasi.
+Risiko tersisa: Scaffold tidak membuktikan fungsi atau persetujuan semua keputusan rinci.
+Impact: M1–M5 tetap modular monolith; tanpa feature crates/generic repository baru.
+
+AUD-019 — RESOLVED (INFO/DATA_INTEGRITY)
+Perubahan: Inventori positif canonical/snapshot diverifikasi ulang; root array/object dan wrapper ekspor historis diperjelas.
+Bukti: doc/backend/BACKEND_BLUEPRINT.md:L1580; doc/backend/BACKEND_BLUEPRINT.md:L1479
+Pemeriksaan: PASS: 22 schema Python, empat snapshot byte/SHA-256 MATCH dan 25 reader.
+Risiko tersisa: Ajv NOT RUN; klasifikasi 18+4 tetap PROPOSED, bukan persetujuan migrasi/data resmi.
+Impact: Inventori M0 terverifikasi; parser seed M2 mengikuti JSON aktual.
+
+AUD-020 — RESOLVED (INFO/IMPLEMENTATION_GAP)
+Perubahan: Baseline SCAFFOLDED_ONLY dicatat eksplisit; komentar/exports/Hello world bukan fitur implemented dan nol test bukan functionality proof.
+Bukti: doc/backend/BACKEND_EXECUTION_PLAN.md:L306; doc/backend/BACKEND_EXECUTION_PLAN.md:L181; doc/backend/BACKEND_EXECUTION_PLAN.md:L596; doc/backend/BACKEND_EXECUTION_PLAN.md:L707
+Pemeriksaan: PASS: inspeksi source dan preservation; Cargo/runtime NOT RUN.
+Risiko tersisa: Fondasi M1 belum diimplementasikan; toolchain harus diperiksa pada task terpisah.
+Impact: M1-01/M1-05 hanya kandidat verification-only setelah otorisasi baru.
+
+AUD-021 — RESOLVED (HIGH/CONTRACT_MISMATCH)
+Perubahan: PerformanceCompositeDTO mewajibkan distribution; unknown year 404, known partial year 503; fixture mismatch tersedia.
+Bukti: doc/backend/openapi.v1.yaml:L3731; doc/backend/openapi.v1.yaml:L4303; doc/backend/BACKEND_BLUEPRINT.md:L975
+Pemeriksaan: PASS: composite cocok dengan tiga target frontend dan delapan fixture schema; dua runtime scenarios NOT RUN.
+Risiko tersisa: Frontend wire yang permissive sengaja tidak diubah; backend wajib memenuhi kontrak lebih ketat tanpa data palsu.
+Impact: M0-04/M3-06 baseline kontrak siap review; implementasi tetap menunggu gates.
+
+G. Decisions intentionally open
+Data resmi: luas district sum93.355,82 vs summary89.935,90 km²; organisasi Toninotito vs artikel pelantikan Nikolas tanggal2026-08-27; district reference year; functions metrics. Jangan mengubah canonical berdasarkan asumsi. Rekomendasi snapshot/provenance dan owner review tertulis, bukan masalah sudah selesai.
+SSR/hybrid vs controlled rebuild, freshness SLA/slug/rollback; topology aktual/proxy/cookie origin; media production storage/provider; CMS workflow/revision/final Admin API tetap DECISION_REQUIRED. Pilihan DB/FK/import/session/cache/audit masih PROPOSED. Lihat Blueprint §12.6 untuk konsekuensi dan milestone gates.
+
+H. Verification and environment
+PASS: 24 GET parity; 249 local refs; 52 schema; 25 exact canonical bindings; 192 respons examples + dua Blueprint examples; 22 canonical JSON + empat snapshots; delapan schema fixtures; 49 task controls/DAG acyclic; 26 table/11 FK/26 checks/enam singleton structural inspection; Markdown/fences/path/traceability; 477 protected hashes tetap; scope hanya tujuh file.
+PASS: official OpenAPI3.1 structural JSON Schema https://spec.openapis.org/oas/3.1/schema/2025-09-15 dengan Python jsonschema: nol error. SHA-256 schema d0a3955182364c7b5fdebfd0583ecad259a870b4a2fe86a1b0fe8785f8224fed. Explicit semantic checks operationID/path params/defaults/status/schema/examples juga PASS. Full third-party semantic validator NOT RUN (tidak terpasang); structural+bounded checks tidak diklaim sebagai semua semantik OAS.
+BLOCKED: rtk tidak tersedia di WSL(exit127); CodeGraph MCP indeks kosong0nodes/edges/files dan CLI node missing(exit127). Fallback targeted inspection; bukan bukti Windows toolchain gagal.
+FAIL awal: git diff --check menandai CRLF existing sebagai trailing whitespace di WSL. PASS: git -c core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol diff --check -- AGENTS.md doc/backend. Tidak mengubah config Git dan tetap memeriksa whitespace biasa.
+NOT RUN: parser DBML(syntax belum terbukti), full third-party OAS semantic validator, Node/Ajv/provider/TypeScript/Vitest/build/browser, Cargo semua gates, database/migration/seed/API/security/load/staging dan dua runtime fixture cases. Tidak ada instalasi dependency atau application-code execution. Existing dirty root/nested frontend changes dipertahankan; .env tidak dibaca/dicetak.
+
+I. Milestone readiness and verdict
+BLOCKED_M0 untuk sign-off penuh. Dokumentasi remediation selesai; owner decisions dan DBML validation belum selesai. Artifact/envelope/Performance specification blockers ditangani; M1 tidak otomatis approved. Plan punya 49 ID existing, DAG dan commands/deliverables/acceptance/approval/recovery/status eksplisit. Task REVIEW/PLANNED bukan DONE.
+Kandidat aman berikutnya setelah otorisasi baru: M1-01 verification-only scaffold/manifes/locked offline compilation lalu M1-05 existing module boundaries, sesuai Execution Plan §2.6. Tanpa re-init, edit source, dependency install/update, perubahan lock, .env, DB/service/frontend changes. Kebutuhan repair harus dilaporkan sebagai FAIL/BLOCKED dan scope terpisah. M1-02/03/04 dan implementasi M1 tetap memerlukan M0-07/approval.
+
+J. Suggested next action
+Review proposal konkret dan keputusan owner; jalankan parser DBML dan full OAS semantic validator pada lingkungan yang sudah memiliki alat; audit ulang gate M0. Alternatif independen: otorisasi verifikasi scaffold terbatas. Jangan mulai coding backend, migration/seed, publish atau deploy dari konteks ini.
+Files changed: AGENTS.md; doc/backend/BACKEND_BLUEPRINT.md; BACKEND_EXECUTION_PLAN.md; database.dbml; new openapi.v1.yaml; ouput/AUDIT_BACKEND_DOCS.md; ouput/LLM_CONTEXT.txt. Hanya tujuh file; ejaan folder ouput disengaja. Dua laporan standalone dengan fakta, proposal dan hasil eksekusi dipisahkan.
+Finding totals: 10 RESOLVED; 9 PARTIAL; 2 DEFERRED; 0 BLOCKED pada register. M0 penuh tetap BLOCKED_M0.
