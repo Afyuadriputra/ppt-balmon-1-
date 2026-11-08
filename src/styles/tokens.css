@@ -1,63 +1,61 @@
 /* ===================================================================
-   THEME TOKENS — edit ONLY this :root block to re-theme the whole deck.
-   The SAME token vocabulary as the `slides` (Slidev) and `webdeck` skills,
-   so a brand looks identical across all of them. The values below are a
-   "dark product" default — REPLACE them to match the brief or the brand.
+   THEME TOKENS — Spectrum Intelligence Editorial Design System
+   Discipline: Apple Keynote x Linear x High-End Engineering Journal
+   No AI Slop: Restrained surfaces, disciplined typography, purpose-driven accents.
    =================================================================== */
 :root {
-  /* Surfaces */
-  --bg: #05070a;
-  --bg-grad-1: rgba(79, 229, 176, 0.12);
-  --bg-grad-2: rgba(41, 192, 240, 0.08);
-  --surface: rgba(255, 255, 255, 0.045);
-  --surface-2: rgba(255, 255, 255, 0.07);
+  /* Surfaces — Deep Institutional Navy */
+  --bg: #081827;
+  --bg-grad-1: rgba(33, 134, 199, 0.08);
+  --bg-grad-2: rgba(87, 213, 245, 0.04);
+  --surface: rgba(11, 42, 74, 0.45);
+  --surface-2: rgba(15, 54, 94, 0.65);
 
-  /* Ink */
-  --fg: #f4f7fa;
-  --fg-muted: #9aa4b2;
-  --fg-faint: #626d7d;
+  /* Ink — High-Contrast Editorial Typography */
+  --fg: #F8FAFC;
+  --fg-muted: #94A3B8;
+  --fg-faint: #64748B;
 
-  /* Hairlines */
-  --hair: rgba(255, 255, 255, 0.1);
+  /* Hairlines — Minimal & Restrained (No harsh neon glow) */
+  --hair: rgba(87, 213, 245, 0.14);
   --hair-2: rgba(255, 255, 255, 0.06);
 
-  /* Accent — ONE accent. May be a 2–4 stop gradient within ~80° of hue. */
-  --primary: #4fe5b0;
+  /* Accent — Spectrum Cyan (Signal) & Technical Blue (Structure) */
+  --primary: #57D5F5;
   --accent: linear-gradient(
     115deg,
-    #c8f56e 0%,
-    #5aeeb0 42%,
-    #34dcd8 74%,
-    #29c0f0 100%
+    #2186C7 0%,
+    #38B6E8 50%,
+    #57D5F5 100%
   );
-  --accent-ink: #04140e;
+  --accent-ink: #081827;
 
-  /* Radius */
-  --radius: 22px;
-  --radius-sm: 12px;
-  --radius-lg: 26px;
+  /* Disciplined Corner Radii: 6px / 12px / 16px */
+  --radius: 12px;
+  --radius-sm: 6px;
+  --radius-lg: 16px;
 
-  /* Depth */
-  --shadow: 0 50px 120px -50px rgba(0, 0, 0, 0.9);
-  --glow: 0 30px 80px -40px rgba(79, 229, 176, 0.5);
+  /* Depth & Atmospheric Scrim */
+  --shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.85);
+  --glow: 0 0 40px -15px rgba(87, 213, 245, 0.25);
 
   /* Type */
-  --font-head: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display',
+  --font-head: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont,
     sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont,
     sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /* Motion */
-  --dur: 0.4s;
-  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur: 0.35s;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Atmosphere */
-  --grain: 0.035;
-  --vignette: rgba(0, 0, 0, 0.22);
+  --grain: 0.02;
+  --vignette: rgba(8, 24, 39, 0.4);
 
-  /* Responsive gutter — fluid side / vertical padding */
-  --gutter: clamp(28px, 6vw, 120px);
-  --gutter-y: clamp(40px, 8vh, 96px);
+  /* Responsive Gutter */
+  --gutter: clamp(28px, 5.5vw, 100px);
+  --gutter-y: clamp(36px, 7vh, 88px);
 }
